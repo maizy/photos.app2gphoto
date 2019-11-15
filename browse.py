@@ -7,7 +7,7 @@ import shutil
 import logging
 
 import photos_app
-from photos_app import folders
+from photos_app import folders, albums
 
 
 def parse_args(args) -> Namespace:
@@ -47,15 +47,24 @@ def main(args) -> int:
     def node_format(node):
         if isinstance(node, folders.Folder):
             return '📂 {name}    (magic={magic}, uuid={uuid})'.format(
-                name=node.name,
+                name=node.name if node.name is not None else '<unnamed>',
+                magic='Y' if node.is_magic else 'N',
+                uuid=node.uuid
+            )
+        elif isinstance(node, albums.Album):
+            return '🖼 {name}    (magic={magic}, uuid={uuid})'.format(
+                name=node.name if node.name is not None else '<unnamed>',
                 magic='Y' if node.is_magic else 'N',
                 uuid=node.uuid
             )
         else:
-            return str(node.value)
+            return str(node)
+
+    albums_list = albums.get_all_albums(db)
+    folders_and_albums_tree = albums.append_albums_to_folders_tree(folders_tree, albums_list)
 
     print('Folders & albums')
-    folders_tree.print(node_format)
+    folders_and_albums_tree.print(node_format)
 
     if tmp_dir is not None:
         if not params.debug:

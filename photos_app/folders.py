@@ -30,16 +30,16 @@ def get_folders_tree(db: sqlite3.Connection) -> Tree:
     while append:
         append = False
         for folder in raw_folders.copy():
-            node = TreeNode(folder, children=[])
+            folder_node = TreeNode(folder)
             if level == 0 and folder.parent_uuid is None:
-                root_nodes.append(node)
+                root_nodes.append(folder_node)
                 append = True
             elif folder.parent_uuid is not None and folder.parent_uuid in nodes_index:
-                nodes_index[folder.parent_uuid].children.append(node)
+                nodes_index[folder.parent_uuid].insert_child(folder_node)
                 append = True
 
             if append:
-                nodes_index[folder.uuid] = node
+                nodes_index[folder.uuid] = folder_node
                 raw_folders.remove(folder)
 
         level += 1
