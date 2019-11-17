@@ -20,7 +20,7 @@ def _log_file_size(file_path, label):
         size = stat.st_rsize
     else:
         size = stat.st_size
-    logging.debug('%s size %0.1f MB', label, size / 1024 / 1024)
+    logger.debug('%s size %0.1f MB', label, size / 1024 / 1024)
 
 
 def open_snapshot(db_path) -> Tuple[str, sqlite3.Connection]:
@@ -38,7 +38,7 @@ def open_snapshot(db_path) -> Tuple[str, sqlite3.Connection]:
     wal_path = db_path + "-wal"
     wal_snapshot_path = snapshot_path + "-wal"
     if os.path.isfile(wal_path):
-        logging.debug('WAL found at %s', wal_path)
+        logger.debug('WAL found at %s', wal_path)
         if logger.isEnabledFor(logging.DEBUG):
             _log_file_size(wal_path, 'DB WAL')
         shutil.copy(wal_path, wal_snapshot_path)

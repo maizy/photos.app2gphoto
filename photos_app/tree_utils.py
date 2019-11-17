@@ -5,11 +5,14 @@ from typing import Dict, Callable, Any, List
 
 class TreeNode:
     def __init__(self, value, children=...):
-        self.children = children if children is not ... else []
+        self.children: List[TreeNode] = children if children is not ... else []
         self.value = value
 
     def clone(self):
         return TreeNode(self.value, [c.clone() for c in self.children])
+
+    def replace(self, match_child, new_child):
+        self.children = [new_child if c == match_child else c for c in self.children]
 
     def insert_child_value(self, value):
         self.insert_child(TreeNode(value))
@@ -55,6 +58,27 @@ class Tree:
         if node.children:
             for child in node.children:
                 self._traverse(func, child)
+
+    def find_first(self, match_func: Callable[[TreeNode], Any]) -> Any:
+        """
+        :param match_func: return matched value or None to continue searching
+        :return first matched value or None
+        """
+        for root in self.root_nodes:
+            node_result = self._find_first(match_func, root)
+            if node_result is not None:
+                return node_result
+        return None
+
+    def _find_first(self, match_func, node):
+        match_result = match_func(node)
+        if match_result is not None:
+            return match_result
+        for child in node.children:
+            match_result = self._find_first(match_func, child)
+            if match_result is not None:
+                return match_result
+        return None
 
     def clone(self):
         new_root_node = [n.clone() for n in self.root_nodes]
