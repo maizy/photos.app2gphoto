@@ -17,7 +17,7 @@ class AlbumSubclass(enum.IntEnum, utils.RichEnumTrait):
     SIMPLE = 3
 
 
-class Album(namedtuple('Album', ['id', 'uuid', 'folder_uuid', 'name', 'subclass', 'is_magic'])):
+class Album(namedtuple('Album', ['id', 'uuid', 'folder_uuid', 'name', 'subclass', 'is_magic', 'items_count'])):
     pass
 
 
@@ -29,10 +29,15 @@ def get_all_albums(db):
     cursor = db_utils.execute(
         db,
         'select'
-        ' modelId as id, uuid, name, albumSubclass as subclass, folderUuid as folder_uuid,'
-        ' isMagic as is_magic '
+        ' RKAlbum.modelId as id, RKAlbum.uuid, RKAlbum.name, RKAlbum.albumSubclass as subclass, '
+        ' RKAlbum.folderUuid as folder_uuid, RKAlbum.isMagic as is_magic, count(RKVersion.modelId) as items_count '
         'from RKAlbum '
-        'where not isInTrash and not isHidden'
+        'left join RKAlbumVersion on RKAlbum.modelId == RKAlbumVersion.albumId '
+        'left join main.RKVersion on RKAlbumVersion.versionId = RKVersion.modelId '
+        'where '
+        '  not RKAlbum.isInTrash and not RKAlbum.isHidden and '
+        '  RKVersion.modelId is null or (not RKVersion.isInTrash and not RKVersion.isHidden) '
+        '  group by RKAlbum.modelId'
     )
 
     return db_utils.fetch_namedtuples(
@@ -72,9 +77,9 @@ def append_albums_to_folders_tree(folders_tree: tree_utils.Tree, albums: List[Al
 
 def get_folders_tree(db: sqlite3.Connection) -> tree_utils.Tree:
     all_folders_query = (
-        "select modelId as id, uuid, name, parentFolderUuid as parent_uuid, isMagic as is_magic "
-        "from RKFolder "
-        "where not isHidden and inTrashDate is null"
+        'select modelId as id, uuid, name, parentFolderUuid as parent_uuid, isMagic as is_magic '
+        'from RKFolder '
+        'where not isHidden and inTrashDate is null'
     )
 
     root_nodes = []
