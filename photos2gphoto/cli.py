@@ -11,9 +11,9 @@ def add_standart_db_options(parser: argparse.ArgumentParser):
     parser.add_argument('-d', '--db', default=str(default_db_path), help='DB path')
     parser.add_argument('--no-snapshot', action='store_true', default=False,
                         help="Don't make database file snapshot to temporary location")
-    parser.add_argument('--fix-projects', action='store_false', default=True,
-                        help='Squash folder & albums in Projects folder (folder exists if you migrate your library'
-                             ' from old iPhoto app)')
+    parser.add_argument('--no-skip-projects', action='store_true', default=False,
+                        help='Skip folder & albums in Projects folder (folder exist if you migrate your library'
+                             ' from old iPhoto app. it\'s always empty)')
 
 
 def cleanup(params: argparse.Namespace, tmp_dir: str):

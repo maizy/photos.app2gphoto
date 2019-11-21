@@ -46,7 +46,7 @@ def get_all_albums(db):
     )
 
 
-def _find_by_uuid(uuid):
+def find_by_uuid(uuid):
     def _matcher(node):
         if node.value.uuid == uuid:
             return node
@@ -60,8 +60,8 @@ def append_albums_to_folders_tree(folders_tree: tree_utils.Tree, albums: List[Al
         logger.error('Empty folders tree, unable to append albums to folders')
         return merged_tree
 
-    default_root = merged_tree.find_first(_find_by_uuid(TOP_LEVEL_ALBUMS_UUID)) or \
-        merged_tree.find_first(_find_by_uuid(LIBRARY_FOLDER_UUID)) or \
+    default_root = merged_tree.find_first(find_by_uuid(TOP_LEVEL_ALBUMS_UUID)) or \
+        merged_tree.find_first(find_by_uuid(LIBRARY_FOLDER_UUID)) or \
         merged_tree.root_nodes[0]
 
     folders_index = tree_utils.build_index(merged_tree, lambda n: n.uuid)
@@ -117,19 +117,3 @@ def get_folders_tree(db: sqlite3.Connection) -> tree_utils.Tree:
             raise PhotosAppError("Unable to build folders tree")
 
     return tree_utils.Tree(root_nodes=root_nodes)
-
-
-def fix_projects_folder(folders_and_albums: tree_utils.Tree) -> tree_utils.Tree:
-    fixed_tree = folders_and_albums.clone()
-
-    projects_node: tree_utils.TreeNode = fixed_tree.find_first(_find_by_uuid(PROJECTS_FOLDERS_UUID))
-    if projects_node is None:
-        logger.debug('Projects node not found')
-    else:
-        logger.debug('Squash Projects folders & albums')
-        for node in projects_node.children:
-            if isinstance(node.value, Folder) and len(node.children) == 1 and \
-                    isinstance(node.children[0].value, Album):
-                projects_node.replace(node, node.children[0])
-
-    return fixed_tree

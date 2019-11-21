@@ -80,6 +80,23 @@ class Tree:
                 return match_result
         return None
 
+    def remove_first(self, match_func: Callable[[TreeNode], bool]):
+        for root in self.root_nodes.copy():
+            remove = self._remove_first(match_func, root)
+            if remove:
+                self.root_nodes.remove(root)
+                break
+
+    def _remove_first(self, match_func, node):
+        remove = match_func(node)
+        if remove:
+            return True
+        for child in node.children.copy():
+            remove = self._remove_first(match_func, child)
+            if remove:
+                node.children.remove(child)
+                return
+
     def clone(self):
         new_root_node = [n.clone() for n in self.root_nodes]
         return Tree(new_root_node)

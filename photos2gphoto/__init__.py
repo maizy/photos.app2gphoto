@@ -40,7 +40,7 @@ def load_folders_and_albums(params: argparse.Namespace) -> Tuple[str, tree_utils
     albums_list = structure.get_all_albums(db)
     folders_and_albums_tree = structure.append_albums_to_folders_tree(folders_tree, albums_list)
 
-    if params.fix_projects:
-        folders_and_albums_tree = structure.fix_projects_folder(folders_and_albums_tree)
+    if not params.no_skip_projects:
+        folders_and_albums_tree.remove_first(structure.find_by_uuid(structure.PROJECTS_FOLDERS_UUID))
 
     return tmp_dir, folders_and_albums_tree
