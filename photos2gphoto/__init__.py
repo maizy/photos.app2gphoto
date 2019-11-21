@@ -11,16 +11,16 @@ logger = logging.getLogger('photos2gphoto')
 
 def node_format(value: Any) -> str:
     if isinstance(value, structure.Folder):
-        return '📂  {name}    (magic={magic}, uuid={uuid})'.format(
+        return '📂  {name}    (magic={magic}, id={id})'.format(
             name=value.name if value.name else '<unnamed>',
             magic='Y' if value.is_magic else 'N',
-            uuid=value.uuid
+            id=value.id
         )
     elif isinstance(value, structure.Album):
-        return '🖼  {name}    (magic={magic}, uuid={uuid})'.format(
+        return '🖼  {name}    (magic={magic}, id={id})'.format(
             name=value.name if value.name else '<unnamed>',
             magic='Y' if value.is_magic else 'N',
-            uuid=value.uuid
+            id=value.id
         )
     else:
         return str(value)
