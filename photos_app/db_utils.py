@@ -4,7 +4,7 @@ import sqlite3
 from photos_app import logger
 
 
-def fetch_namedtuples(constructor, cursor: sqlite3.Cursor, boolean_columns=..., custom_columns=...):
+def fetch_namedtuples(constructor, cursor: sqlite3.Cursor, boolean_columns=..., int_columns=..., custom_columns=...):
     results = []
     first = True
     columns = None
@@ -15,6 +15,9 @@ def fetch_namedtuples(constructor, cursor: sqlite3.Cursor, boolean_columns=..., 
         if boolean_columns is not ...:
             for col in boolean_columns:
                 values[col] = bool(values[col])
+        if int_columns is not ...:
+            for col in int_columns:
+                values[col] = int(values[col])
         if custom_columns is not ...:
             for col, func in custom_columns.items():
                 values[col] = func(values[col])

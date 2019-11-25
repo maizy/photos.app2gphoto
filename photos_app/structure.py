@@ -25,19 +25,23 @@ class Folder(namedtuple('Folder', ['id', 'uuid', 'name', 'parent_uuid', 'is_magi
     pass
 
 
+_albums_base_query = '''\
+select 
+ RKAlbum.modelId as id, RKAlbum.uuid, RKAlbum.name, RKAlbum.albumSubclass as subclass,  
+ RKAlbum.folderUuid as folder_uuid, RKAlbum.isMagic as is_magic, count(RKVersion.modelId) as items_count  
+from RKAlbum  
+left join RKAlbumVersion on RKAlbum.modelId == RKAlbumVersion.albumId  
+left join main.RKVersion on RKAlbumVersion.versionId = RKVersion.modelId  
+where  
+  not RKAlbum.isInTrash and not RKAlbum.isHidden and  
+  (RKVersion.modelId is null or (not RKVersion.isInTrash and not RKVersion.isHidden)) 
+'''
+
+
 def get_all_albums(db):
     cursor = db_utils.execute(
         db,
-        'select'
-        ' RKAlbum.modelId as id, RKAlbum.uuid, RKAlbum.name, RKAlbum.albumSubclass as subclass, '
-        ' RKAlbum.folderUuid as folder_uuid, RKAlbum.isMagic as is_magic, count(RKVersion.modelId) as items_count '
-        'from RKAlbum '
-        'left join RKAlbumVersion on RKAlbum.modelId == RKAlbumVersion.albumId '
-        'left join main.RKVersion on RKAlbumVersion.versionId = RKVersion.modelId '
-        'where '
-        '  not RKAlbum.isInTrash and not RKAlbum.isHidden and '
-        '  RKVersion.modelId is null or (not RKVersion.isInTrash and not RKVersion.isHidden) '
-        '  group by RKAlbum.modelId'
+        _albums_base_query + '\ngroup by RKAlbum.modelId'
     )
 
     return db_utils.fetch_namedtuples(
@@ -46,7 +50,22 @@ def get_all_albums(db):
     )
 
 
-def find_by_uuid(uuid):
+def get_album(db, album_id):
+    cursor = db_utils.execute(
+        db,
+        _albums_base_query + '\n  and RKAlbum.modelId = ? \ngroup by RKAlbum.modelId',
+        (album_id, )
+    )
+    res = db_utils.fetch_namedtuples(
+        Album, cursor, boolean_columns=['is_magic'],
+        custom_columns={'subclass': utils.build_to_enum_converter(AlbumSubclass)}
+    )
+    if len(res) == 1:
+        return res[0]
+    return None
+
+
+def find_in_tree_by_uuid(uuid):
     def _matcher(node):
         if node.value.uuid == uuid:
             return node
@@ -60,9 +79,9 @@ def append_albums_to_folders_tree(folders_tree: tree_utils.Tree, albums: List[Al
         logger.error('Empty folders tree, unable to append albums to folders')
         return merged_tree
 
-    default_root = merged_tree.find_first(find_by_uuid(TOP_LEVEL_ALBUMS_UUID)) or \
-        merged_tree.find_first(find_by_uuid(LIBRARY_FOLDER_UUID)) or \
-        merged_tree.root_nodes[0]
+    default_root = merged_tree.find_first(find_in_tree_by_uuid(TOP_LEVEL_ALBUMS_UUID)) or \
+                   merged_tree.find_first(find_in_tree_by_uuid(LIBRARY_FOLDER_UUID)) or \
+                   merged_tree.root_nodes[0]
 
     folders_index = tree_utils.build_index(merged_tree, lambda n: n.uuid)
     for album in albums:

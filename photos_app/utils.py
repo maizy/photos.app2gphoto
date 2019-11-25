@@ -1,6 +1,7 @@
 # coding: utf-8
 import enum
 from typing import Callable, Any, Optional
+import re
 
 from photos_app import logger
 
@@ -20,3 +21,7 @@ def build_to_enum_converter(enum_constructor: RichEnumTrait) -> Callable[[Any], 
             logger.warn('unknown value %r for %s', value, type(enum_constructor))
             return None
     return _int
+
+
+def clean_filename(name):
+    return re.sub(r'[^\w\s\.-]', '', name, re.U).strip()
